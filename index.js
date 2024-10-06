@@ -26,7 +26,7 @@ httpGET(url, type, options)
   .then(data => console.log(data))
   .catch(error => console.error(error));
 
-// POST, PUT, PATCH, DELETE for test and example
+// POST, PUT, PATCH, DELETE for testing
 httpPOST(url, { title: "foo", body: "bar", userId: 1 }, type, options)
   .then(data => console.log(data))
   .catch(error => console.error(error));
