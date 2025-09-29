@@ -1,60 +1,97 @@
 // Function to send an HTTP request using fetch
-// This function uses currying to allow for easy customization of the request type and options
-async function myfetch(url, options = {}) {
-  console.log(options);
+async function httpRequest(url, options = {}) {
+  // Prepare default headers
+  const defaultHeaders = {
+    'Content-Type': 'application/json',
+  };
 
-  try {
-    let response = await fetch(url, options);
+  // Merge headers properly
+  const config = {
+    ...options,
+    headers: {
+      ...defaultHeaders,
+      ...options.headers,
+    },
+  };
 
-    if (!response.ok) {
-      throw new Error(`HTTP error : ${response.status} ${response.statusText}`);
-    }
-
-    return (type) => {
-      switch (type.toLocaleLowerCase()) {
-        case "json":
-          return response.json();
-        case "text":
-          return response.text();
-        case "blob":
-          return response.blob();
-        case "formdata":
-          return response.formData();
-        default:
-          return response.arrayBuffer();
-      }
-    }   
-    
-  } catch (error) {
-    console.error('Fetch error :', error);
-    throw error;
+  // Serialize body if it's an object and not already a string or FormData
+  if (config.body && typeof config.body === 'object' && !(config.body instanceof FormData)) {
+    config.body = JSON.stringify(config.body);
   }
 
+  try {
+    const response = await fetch(url, config);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return response;
+  } catch (error) {
+    console.error('HTTP request failed:', error);
+    throw error;
+  }
+}
+
+// Function to parse response based on type
+async function parseResponse(response, type = 'json') {
+  switch (type.toLowerCase()) {
+    case 'json':
+      return await response.json();
+    case 'text':
+      return await response.text();
+    case 'blob':
+      return await response.blob();
+    case 'formdata':
+      return await response.formData();
+    case 'arrayBuffer':
+    case 'arraybuffer':
+      return await response.arrayBuffer();
+    default:
+      return await response.json(); // Default to JSON
+  }
 }
 
 // Function to send an HTTP GET request
-async function httpGET(url, type = 'json', options) {
-  return (await myfetch(url, options)) (type);
+async function httpGET(url, type = 'json', options = {}) {
+  const response = await httpRequest(url, { method: 'GET', ...options });
+  return await parseResponse(response, type);
 }
 
 // Function to send an HTTP POST request
-async function httpPOST(url, body, type = 'json', options) {
-  return (await myfetch(url, { method: 'POST' ,body, ...options})) (type);
+async function httpPOST(url, body, type = 'json', options = {}) {
+  const response = await httpRequest(url, { 
+    method: 'POST', 
+    body, 
+    ...options 
+  });
+  return await parseResponse(response, type);
 }
 
 // Function to send an HTTP PUT request
-async function httpPUT(url, body, type = 'json', options) {
-  return (await myfetch(url, { method: 'PUT', body, ...options})) (type);
+async function httpPUT(url, body, type = 'json', options = {}) {
+  const response = await httpRequest(url, { 
+    method: 'PUT', 
+    body, 
+    ...options 
+  });
+  return await parseResponse(response, type);
 }
 
 // Function to send an HTTP PATCH request
-async function httpPATCH(url, body, type = 'json', options) {
-  return (await myfetch(url, { method: 'PATCH', body, ...options})) (type);
+async function httpPATCH(url, body, type = 'json', options = {}) {
+  const response = await httpRequest(url, { 
+    method: 'PATCH', 
+    body, 
+    ...options 
+  });
+  return await parseResponse(response, type);
 }
 
 // Function to send an HTTP DELETE request
-async function httpDELETE(url, type = 'json', options) {
-  return (await myfetch(url, { method: 'DELETE', ...options})) (type);
+async function httpDELETE(url, type = 'json', options = {}) {
+  const response = await httpRequest(url, { method: 'DELETE', ...options });
+  return await parseResponse(response, type);
 }
 
 export { httpGET, httpPOST, httpPUT, httpPATCH, httpDELETE };
