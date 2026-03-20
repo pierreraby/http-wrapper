@@ -1,4 +1,12 @@
+/** @typedef {import("./types").ResponseType} ResponseType */
+/** @typedef {import("./types").HttpOptions} HttpOptions */
+
 // Function to send an HTTP request using fetch
+/**
+ * @param {string} url
+ * @param {HttpOptions} [options={}]
+ * @returns {Promise<Response>}
+ */
 async function httpRequest(url, options = {}) {
   // Prepare default headers
   const defaultHeaders = {
@@ -34,6 +42,12 @@ async function httpRequest(url, options = {}) {
 }
 
 // Function to parse response based on type
+/**
+ * @template TResponse
+ * @param {Response} response
+ * @param {ResponseType} [type='json']
+ * @returns {Promise<TResponse>}
+ */
 async function parseResponse(response, type = 'json') {
   switch (type.toLowerCase()) {
     case 'json':
@@ -53,12 +67,27 @@ async function parseResponse(response, type = 'json') {
 }
 
 // Function to send an HTTP GET request
+/**
+ * @template TResponse
+ * @param {string} url
+ * @param {ResponseType} [type='json']
+ * @param {HttpOptions} [options={}]
+ * @returns {Promise<TResponse>}
+ */
 async function httpGET(url, type = 'json', options = {}) {
   const response = await httpRequest(url, { method: 'GET', ...options });
   return await parseResponse(response, type);
 }
 
 // Function to send an HTTP POST request
+/**
+ * @template TResponse, TBody
+ * @param {string} url
+ * @param {TBody} body
+ * @param {ResponseType} [type='json']
+ * @param {HttpOptions} [options={}]
+ * @returns {Promise<TResponse>}
+ */
 async function httpPOST(url, body, type = 'json', options = {}) {
   const response = await httpRequest(url, { 
     method: 'POST', 
@@ -69,6 +98,14 @@ async function httpPOST(url, body, type = 'json', options = {}) {
 }
 
 // Function to send an HTTP PUT request
+/**
+ * @template TResponse, TBody
+ * @param {string} url
+ * @param {TBody} body
+ * @param {ResponseType} [type='json']
+ * @param {HttpOptions} [options={}]
+ * @returns {Promise<TResponse>}
+ */
 async function httpPUT(url, body, type = 'json', options = {}) {
   const response = await httpRequest(url, { 
     method: 'PUT', 
@@ -79,6 +116,14 @@ async function httpPUT(url, body, type = 'json', options = {}) {
 }
 
 // Function to send an HTTP PATCH request
+/**
+ * @template TResponse, TBody
+ * @param {string} url
+ * @param {TBody} body
+ * @param {ResponseType} [type='json']
+ * @param {HttpOptions} [options={}]
+ * @returns {Promise<TResponse>}
+ */
 async function httpPATCH(url, body, type = 'json', options = {}) {
   const response = await httpRequest(url, { 
     method: 'PATCH', 
@@ -89,6 +134,13 @@ async function httpPATCH(url, body, type = 'json', options = {}) {
 }
 
 // Function to send an HTTP DELETE request
+/**
+ * @template TResponse
+ * @param {string} url
+ * @param {ResponseType} [type='json']
+ * @param {HttpOptions} [options={}]
+ * @returns {Promise<TResponse>}
+ */
 async function httpDELETE(url, type = 'json', options = {}) {
   const response = await httpRequest(url, { method: 'DELETE', ...options });
   return await parseResponse(response, type);

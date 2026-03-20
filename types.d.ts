@@ -7,11 +7,11 @@ export type HttpOptions = RequestInit & {
 };
 
 export interface HttpWrapper {
-  httpGET<T = any>(url: string, type?: ResponseType, options?: HttpOptions): Promise<T>;
-  httpPOST<T = any>(url: string, body: any, type?: ResponseType, options?: HttpOptions): Promise<T>;
-  httpPUT<T = any>(url: string, body: any, type?: ResponseType, options?: HttpOptions): Promise<T>;
-  httpPATCH<T = any>(url: string, body: any, type?: ResponseType, options?: HttpOptions): Promise<T>;
-  httpDELETE<T = any>(url: string, type?: ResponseType, options?: HttpOptions): Promise<T>;
+  httpGET<TResponse = unknown>(url: string, type?: ResponseType, options?: HttpOptions): Promise<TResponse>;
+  httpPOST<TResponse = unknown, TBody = unknown>(url: string, body: TBody, type?: ResponseType, options?: HttpOptions): Promise<TResponse>;
+  httpPUT<TResponse = unknown, TBody = unknown>(url: string, body: TBody, type?: ResponseType, options?: HttpOptions): Promise<TResponse>;
+  httpPATCH<TResponse = unknown, TBody = unknown>(url: string, body: TBody, type?: ResponseType, options?: HttpOptions): Promise<TResponse>;
+  httpDELETE<TResponse = unknown>(url: string, type?: ResponseType, options?: HttpOptions): Promise<TResponse>;
 }
 
 // Usage example with strict typing:
