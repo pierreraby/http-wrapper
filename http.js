@@ -1,6 +1,93 @@
 /** @typedef {import("./types").ResponseType} ResponseType */
 /** @typedef {import("./types").HttpOptions} HttpOptions */
 
+class HttpError extends Error {
+  /**
+   * @param {string} message
+   * @param {{ status: number, statusText: string, url: string, body?: unknown }} details
+   */
+  constructor(message, details) {
+    super(message);
+    this.name = 'HttpError';
+    this.status = details.status;
+    this.statusText = details.statusText;
+    this.url = details.url;
+    this.body = details.body;
+  }
+}
+
+/**
+ * @param {HeadersInit | undefined} headers
+ * @param {string} headerName
+ * @returns {boolean}
+ */
+function hasHeader(headers, headerName) {
+  if (!headers) {
+    return false;
+  }
+
+  if (headers instanceof Headers) {
+    return headers.has(headerName);
+  }
+
+  const normalizedHeaderName = headerName.toLowerCase();
+
+  if (Array.isArray(headers)) {
+    return headers.some(([key]) => key.toLowerCase() === normalizedHeaderName);
+  }
+
+  return Object.keys(headers).some((key) => key.toLowerCase() === normalizedHeaderName);
+}
+
+/**
+ * Only plain objects and arrays should be JSON-serialized automatically.
+ * @param {unknown} body
+ * @returns {boolean}
+ */
+function shouldSerializeBody(body) {
+  if (body == null || typeof body === 'string') {
+    return false;
+  }
+
+  if (typeof FormData !== 'undefined' && body instanceof FormData) {
+    return false;
+  }
+
+  if (typeof URLSearchParams !== 'undefined' && body instanceof URLSearchParams) {
+    return false;
+  }
+
+  if (typeof Blob !== 'undefined' && body instanceof Blob) {
+    return false;
+  }
+
+  if (typeof ArrayBuffer !== 'undefined') {
+    if (body instanceof ArrayBuffer || ArrayBuffer.isView(body)) {
+      return false;
+    }
+  }
+
+  return Array.isArray(body) || Object.prototype.toString.call(body) === '[object Object]';
+}
+
+/**
+ * @param {Response} response
+ * @returns {Promise<unknown>}
+ */
+async function parseErrorBody(response) {
+  const rawBody = await response.text();
+
+  if (!rawBody) {
+    return undefined;
+  }
+
+  try {
+    return JSON.parse(rawBody);
+  } catch {
+    return rawBody;
+  }
+}
+
 // Function to send an HTTP request using fetch
 /**
  * @param {string} url
@@ -8,37 +95,32 @@
  * @returns {Promise<Response>}
  */
 async function httpRequest(url, options = {}) {
-  // Prepare default headers
-  const defaultHeaders = {
-    'Content-Type': 'application/json',
-  };
-
-  // Merge headers properly
+  const shouldSerialize = shouldSerializeBody(options.body);
   const config = {
     ...options,
-    headers: {
-      ...defaultHeaders,
-      ...options.headers,
-    },
+    headers: new Headers(options.headers),
   };
 
-  // Serialize body if it's an object and not already a string or FormData
-  if (config.body && typeof config.body === 'object' && !(config.body instanceof FormData)) {
+  if (shouldSerialize && !hasHeader(options.headers, 'Content-Type')) {
+    config.headers.set('Content-Type', 'application/json');
+  }
+
+  if (shouldSerialize) {
     config.body = JSON.stringify(config.body);
   }
 
-  try {
-    const response = await fetch(url, config);
+  const response = await fetch(url, config);
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return response;
-  } catch (error) {
-    console.error('HTTP request failed:', error);
-    throw error;
+  if (!response.ok) {
+    throw new HttpError(`HTTP ${response.status}: ${response.statusText}`, {
+      status: response.status,
+      statusText: response.statusText,
+      url,
+      body: await parseErrorBody(response),
+    });
   }
+
+  return response;
 }
 
 // Function to parse response based on type
@@ -50,8 +132,19 @@ async function httpRequest(url, options = {}) {
  */
 async function parseResponse(response, type = 'json') {
   switch (type.toLowerCase()) {
-    case 'json':
-      return await response.json();
+    case 'json': {
+      if ([204, 205, 304].includes(response.status)) {
+        return undefined;
+      }
+
+      const rawBody = await response.text();
+
+      if (!rawBody) {
+        return undefined;
+      }
+
+      return JSON.parse(rawBody);
+    }
     case 'text':
       return await response.text();
     case 'blob':
@@ -146,4 +239,4 @@ async function httpDELETE(url, type = 'json', options = {}) {
   return await parseResponse(response, type);
 }
 
-export { httpGET, httpPOST, httpPUT, httpPATCH, httpDELETE };
+export { HttpError, httpGET, httpPOST, httpPUT, httpPATCH, httpDELETE };

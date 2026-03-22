@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "startTS": "node --no-warnings --experimental-transform-types index.ts"
+    "startTS": "node --no-warnings --experimental-transform-types index.ts",
+    "test": "node --test"
   },
   "keywords": [],
   "author": "",

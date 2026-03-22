@@ -3,8 +3,23 @@
 export type ResponseType = 'json' | 'text' | 'blob' | 'formdata' | 'arrayBuffer' | 'arraybuffer';
 
 export type HttpOptions = RequestInit & {
-  headers?: Record<string, string>;
+  headers?: HeadersInit;
 };
+
+export class HttpError extends Error {
+  status: number;
+  statusText: string;
+  url: string;
+  body?: unknown;
+
+  constructor(message: string, details: { status: number; statusText: string; url: string; body?: unknown });
+}
+
+export function httpGET<TResponse = unknown>(url: string, type?: ResponseType, options?: HttpOptions): Promise<TResponse>;
+export function httpPOST<TResponse = unknown, TBody = unknown>(url: string, body: TBody, type?: ResponseType, options?: HttpOptions): Promise<TResponse>;
+export function httpPUT<TResponse = unknown, TBody = unknown>(url: string, body: TBody, type?: ResponseType, options?: HttpOptions): Promise<TResponse>;
+export function httpPATCH<TResponse = unknown, TBody = unknown>(url: string, body: TBody, type?: ResponseType, options?: HttpOptions): Promise<TResponse>;
+export function httpDELETE<TResponse = unknown>(url: string, type?: ResponseType, options?: HttpOptions): Promise<TResponse>;
 
 export interface HttpWrapper {
   httpGET<TResponse = unknown>(url: string, type?: ResponseType, options?: HttpOptions): Promise<TResponse>;
